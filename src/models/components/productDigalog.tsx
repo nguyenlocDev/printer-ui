@@ -23,7 +23,7 @@ const ProductDialog = ({
       _id: string;
       articleName: string;
       barcode: string;
-      sellingPrice: number;
+      actualPrice: number;
     }[]
   >([]);
 
@@ -31,7 +31,7 @@ const ProductDialog = ({
     _id: string;
     articleName: string;
     barcode: string;
-    sellingPrice: number;
+    actualPrice: number;
   }) => {
     // Check if product already exists in the list
     const existingProduct = products.find(
@@ -100,7 +100,7 @@ const ProductDialog = ({
                 <div className="flex-1">
                   <div className="font-medium">{product.articleName}</div>
                   <div className="text-sm text-muted-foreground">
-                    {product?.sellingPrice?.toLocaleString()} VNĐ
+                    {product?.actualPrice?.toLocaleString()} VNĐ
                   </div>
                 </div>
                 <Button

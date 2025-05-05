@@ -4,7 +4,7 @@
 import * as React from "react";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 
-import { cn, formatRandomTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -138,6 +138,12 @@ export function NameStore({ setInfoStore }: NameStoreProps) {
             <Calendar
               mode="single"
               selected={date}
+              onDayClick={(e) => {
+                setInfoStore((prevState: any) => ({
+                  ...prevState,
+                  date: e.toString(),
+                }));
+              }}
               onSelect={setDate}
               initialFocus
             />
@@ -152,7 +158,6 @@ export function NameStore({ setInfoStore }: NameStoreProps) {
             setInfoStore((prevState: any) => ({
               ...prevState,
               fullName: e,
-              date: formatRandomTime(date?.toString() as string),
             }));
           }}
         >

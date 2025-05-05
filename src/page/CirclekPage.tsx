@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -26,16 +25,29 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { NameStore } from "@/models/components/nameStore";
 import ProductDialog from "@/models/components/productDigalog";
 import { printReceipt } from "@/api/apiCircleK";
+import {
+  convertDateToYYYYMMDD,
+  convertStringToUpperCase,
+  formatRandomTime,
+  paymentType,
+  randomNumber,
+  randomPaymentMethod,
+} from "@/lib/utils";
+import { DialogRandomPrint } from "@/models/components/dialogRandomPrint";
 
 export default function CirclekPage() {
-  const [infoStore, setInfoStore] = useState<
-    { storeCode: string; nameStore: string; fullname: string; date: string }[]
-  >([]);
+  const [paymentTypeSelect, setPaymentTypeSelect] = useState<string>("Cash");
+  const [infoStore, setInfoStore] = useState<{
+    storeCode: string;
+    nameStore: string;
+    fullname: string;
+    date: string;
+  }>();
   const [products, setProducts] = useState<
     {
       articleName: string;
       barcode: string;
-      sellingPrice: number;
+      actualPrice: number;
       quantity: number;
       type: string;
     }[]
@@ -58,20 +70,40 @@ export default function CirclekPage() {
 
   const calculateTotal = () => {
     return products.reduce(
-      (sum, product) => sum + product?.sellingPrice * product.quantity,
+      (sum, product) => sum + product?.actualPrice * product.quantity,
       0
     );
   };
-
+  // const printInvoiceRandom = () => {};
   const printInvoice = () => {
+    const rec = randomNumber();
+    let paymentT: string = paymentTypeSelect;
+    if (paymentTypeSelect === "random") {
+      paymentT = randomPaymentMethod();
+    }
+    const dataPayment = paymentType(
+      paymentT,
+      calculateTotal(),
+      infoStore?.storeCode as string,
+      infoStore?.date as string
+    );
+    if (!dataPayment) return;
+    console.log(infoStore?.date?.toString());
     printReceipt({
       ...infoStore,
+      date: formatRandomTime(infoStore?.date?.toString() as string),
       terminal: "02",
-      receipt: "115",
-      barcode: "20250415-QQT",
+      receipt: rec,
+      barcode:
+        convertDateToYYYYMMDD(
+          formatRandomTime(infoStore?.date?.toString() as string)
+        ) +
+        "-" +
+        convertStringToUpperCase(rec),
       product: products,
       promotion: [],
       discount: [],
+      payment: { ...dataPayment },
     });
   };
   console.log(infoStore);
@@ -156,11 +188,11 @@ export default function CirclekPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">
-                        {product?.sellingPrice?.toLocaleString()} VNĐ
+                        {product?.actualPrice?.toLocaleString()} VNĐ
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         {(
-                          product?.sellingPrice * product.quantity
+                          product?.actualPrice * product.quantity
                         ).toLocaleString()}{" "}
                         VNĐ
                       </TableCell>
@@ -199,22 +231,15 @@ export default function CirclekPage() {
           <Label>Phương thức thanh toán</Label>
           <RadioGroup
             onValueChange={(e) => {
-              setInfoStore((prevState: any) => ({
-                ...prevState,
-                payment: {
-                  type: e,
-                  totalPay: calculateTotal(),
-                  typeCard: "VISA",
-                  refernceId: "111111111111",
-                  apprCode: "111111",
-                  TranID: "111111",
-                  changeDue: 0,
-                },
-              }));
+              setPaymentTypeSelect(e);
             }}
             // defaultValue="Cash"
             className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4"
           >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="random" id="random" />
+              <Label htmlFor="random">random</Label>
+            </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="Cash" id="cash" />
               <Label htmlFor="cash">Tiền mặt</Label>
@@ -228,25 +253,22 @@ export default function CirclekPage() {
               <Label htmlFor="transfer">VnPay</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Momo" id="momo" />
-              <Label htmlFor="momo">Ví MoMo</Label>
-            </div>
-            <div className="flex items-center space-x-2">
               <RadioGroupItem value="MomoQR" id="momoqr" />
               <Label htmlFor="momoqr">Ví MoMo qr</Label>
             </div>
           </RadioGroup>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end p-3 sm:p-6">
+      <CardFooter className="flex space-x-3 justify-end p-3 sm:p-6">
         <Button
           onClick={printInvoice}
           disabled={products.length === 0}
-          className="w-full sm:w-auto"
+          className=" sm:w-auto"
         >
           <Printer className="h-4 w-4 mr-2" />
           In hóa đơn
         </Button>
+        <DialogRandomPrint></DialogRandomPrint>
       </CardFooter>
       <ProductDialog
         products={products}
